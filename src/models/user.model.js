@@ -54,13 +54,13 @@ UseSchema.pre("save", async function (next) {
     next(error);
   }
 });
-userSchema.methods.verifyPassword = async function (password) {
+UseSchema.methods.verifyPassword = async function (password) {
   return await bcryptjs.compare(password, this.password);
 };
-userSchema.methods.generateAccessToken = function () {
+UseSchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {
-      id: this._id,
+      _id: this._id,
       email: this.email,
       username: this.username,
       fullname: this.fullname,
@@ -71,14 +71,14 @@ userSchema.methods.generateAccessToken = function () {
     }
   );
 };
-userSchema.methods.generateRefreshToken = function () {
+UseSchema.methods.generateRefreshToken = function () {
   return jwt.sign(
     {
-      id: this._id,
+      _id: this._id,
     },
     process.env.REFRESH_TOKEN_SECRET,
     {
-      expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
+      expiresIn: process.env.REFRESH_EXPIRES_IN,
     }
   );
 };

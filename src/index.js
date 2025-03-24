@@ -1,7 +1,8 @@
 import dotenv from "dotenv";
+dotenv.config();
 import connectDB from "./db/db.js";
 import { app } from "./app.js";
-dotenv.config();
+
 console.log(process.env.PORT);
 
 connectDB()
