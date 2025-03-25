@@ -156,5 +156,89 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid refresh token");
   }
 });
-  
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const changePassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  if (!oldPassword || !newPassword) {
+    throw new ApiError(400, "Please provide old and new password");
+  }
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  const isPasswordValid = await user.verifyPassword(oldPassword);
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid old password");
+  }
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password changed successfully"));
+});
+const updateUser = asyncHandler(async (req, res) => {
+  const { fullname, username, email } = req.body;
+  // if ([fullname, username, email].some((field) => field?.trim() === "")) {
+  //   throw new ApiError(400, "Please fill all the fields");
+  // }
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { fullname, username, email },
+    { new: true }
+  );
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "User updated successfully"));
+});
+const getCurrentUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).select("-password -refreshToken");
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "User found successfully"));
+});
+const updateProfileandCoverImage = asyncHandler(async (req, res) => {
+  const avatarLocalPath = req.files?.avatar?.[0]?.path;
+  const coverImgLocalPath = req.files?.coverImg?.[0]?.path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Please upload avatar image");
+  }
+
+  // Upload avatar image to Cloudinary
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+  // Upload cover image to Cloudinary only if it is provided
+  let coverImg;
+  if (coverImgLocalPath) {
+    coverImg = await uploadOnCloudinary(coverImgLocalPath);
+  }
+
+  if (!avatar) {
+    throw new ApiError(
+      500,
+      "Something went wrong while uploading avatar or cover image"
+    );
+  }
+
+  // Update the user with the new avatar and optionally the cover image
+  const updateData = { avatar: avatar?.url };
+  if (coverImg?.url) {
+    updateData.coverImg = coverImg.url;
+  }
+
+  const user = await User.findByIdAndUpdate(req.user._id, updateData, { new: true });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Profile and cover image updated successfully"));
+});
+export { registerUser, loginUser, logoutUser, refreshAccessToken, changePassword, updateUser, getCurrentUser , updateProfileandCoverImage};
