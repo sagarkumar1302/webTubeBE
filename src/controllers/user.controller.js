@@ -223,7 +223,11 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 const updateProfileandCoverImage = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.files?.avatar?.[0]?.path;
   const coverImgLocalPath = req.files?.coverImg?.[0]?.path;
-
+  console.log(req.files);
+  
+  console.log(avatarLocalPath);
+  console.log(coverImgLocalPath);
+  
   if (!avatarLocalPath) {
     throw new ApiError(400, "Please upload avatar image");
   }
@@ -268,7 +272,7 @@ const updateProfileandCoverImage = asyncHandler(async (req, res) => {
       )
     );
 });
-const getUserChannerProfile = asyncHandler(async (req, res) => {
+const getUserChannelProfile = asyncHandler(async (req, res) => {
   const { username } = req.params;
   if (!username) {
     throw new ApiError(400, "User username is required");
@@ -388,6 +392,6 @@ export {
   updateUser,
   getCurrentUser,
   updateProfileandCoverImage,
-  getUserChannerProfile,
+  getUserChannelProfile,
   getWatchHistory,
 };
