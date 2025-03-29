@@ -328,6 +328,57 @@ const getUserChannerProfile = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, channel[0], "Channel found successfully"));
 });
+const getWatchHistory = asyncHandler(async (req, res) => {
+  const user = await User.aggregate([
+    { $match: { _id: req.user._id } },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "watchedHistory",
+        foreignField: "_id",
+        as: "watchHistory",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                {
+                  $project: {
+                    fullname: 1,
+                    username: 1,
+                    avatar: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              owner: { $arrayElemAt: ["$owner", 0] },
+            },
+          }
+        ],
+      },
+    },
+    {
+      $project: {
+        watchHistory: 1,
+      },
+    },
+  ]);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  if (!user[0]?.watchHistory?.length) {
+    throw new ApiError(404, "Watch history not found");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user[0].watchHistory, "Watch history found"));
+});
 export {
   registerUser,
   loginUser,
@@ -338,4 +389,5 @@ export {
   getCurrentUser,
   updateProfileandCoverImage,
   getUserChannerProfile,
+  getWatchHistory,
 };
